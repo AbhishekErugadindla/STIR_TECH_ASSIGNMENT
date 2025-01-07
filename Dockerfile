@@ -24,11 +24,7 @@ COPY . .
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
 ENV CHROME_BIN=/usr/bin/chromium
 
-# Expose port
-EXPOSE 8000
-
 # Start command
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+CMD ["python", "app.py"]
