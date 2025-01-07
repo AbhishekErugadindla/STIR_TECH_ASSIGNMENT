@@ -10,7 +10,13 @@ RUN apt-get update && apt-get install -y \
     libgconf-2-4 \
     default-jdk \
     chromium \
-    chromium-driver
+    chromium-driver \
+    chromium-browser
+
+# Set Chrome binary path
+ENV CHROME_BINARY_PATH=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+ENV CHROME_BIN=/usr/bin/chromium
 
 # Set working directory
 WORKDIR /app
@@ -24,7 +30,6 @@ COPY . .
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV CHROME_BIN=/usr/bin/chromium
 
 # Start command
 CMD ["python", "app.py"]
