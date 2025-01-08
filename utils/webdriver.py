@@ -48,7 +48,7 @@ def setup_driver():
         chrome_options.add_argument('--disable-extensions')
         
         # Create the driver with default ChromeDriver path
-        service = Service(executable_path='./chromedriver.exe')
+        service = Service()
         options = webdriver.ChromeOptions()
         driver = webdriver.Chrome(service=service, options=options)
         
