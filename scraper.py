@@ -335,19 +335,45 @@ def get_trending_topics(self) -> List[str]:
             logger.error(f"Error saving to MongoDB: {str(e)}")
             raise
 
+    # def scrape(self) -> Optional[Dict[str, str]]:
+    #     """Main scraping method"""
+    #     try:
+    #         # Get current IP before starting the scraping process
+    #         self.get_current_ip()
+    #         self.setup_driver()
+
+    #         if not self.login_to_twitter():
+    #             raise Exception("Failed to login to Twitter")
+
+    #         trends = self.get_trending_topics()
+    #         return self.save_to_mongodb(trends)
+
+    #     except Exception as e:
+    #         logger.error(f"Scraping failed: {str(e)}")
+    #         if self.driver:
+    #             screenshot_path = f"error_screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    #             self.driver.save_screenshot(screenshot_path)
+    #             logger.info(f"Error screenshot saved to {screenshot_path}")
+    #         return None
+
+    #     finally:
+    #         if self.driver:
+    #             logger.info("Closing WebDriver...")
+    #             self.driver.quit()
+
     def scrape(self) -> Optional[Dict[str, str]]:
         """Main scraping method"""
         try:
             # Get current IP before starting the scraping process
             self.get_current_ip()
             self.setup_driver()
-
+    
             if not self.login_to_twitter():
                 raise Exception("Failed to login to Twitter")
-
+    
             trends = self.get_trending_topics()
             return self.save_to_mongodb(trends)
-
+    
         except Exception as e:
             logger.error(f"Scraping failed: {str(e)}")
             if self.driver:
@@ -355,7 +381,7 @@ def get_trending_topics(self) -> List[str]:
                 self.driver.save_screenshot(screenshot_path)
                 logger.info(f"Error screenshot saved to {screenshot_path}")
             return None
-
+    
         finally:
             if self.driver:
                 logger.info("Closing WebDriver...")
