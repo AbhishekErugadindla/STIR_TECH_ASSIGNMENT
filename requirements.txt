@@ -5,3 +5,4 @@ python-dotenv==1.0.0
 gunicorn==21.2.0
 requests==2.31.0
 chromedriver-autoinstaller==0.6.2
+webdriver_manager==4.0.1
