@@ -6,6 +6,8 @@ from utils.webdriver import setup_driver
 
 app = Flask(__name__)
 
+TIMEOUT = 300  # 5 minutes
+
 
 @app.route("/")
 def home():
