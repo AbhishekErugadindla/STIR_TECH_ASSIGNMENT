@@ -97,152 +97,84 @@ class TwitterScraper:
         except Exception as e:
             logger.error(f"Error finding element {value}: {str(e)}")
             return None
+   
     def login_to_twitter(self) -> bool:
-        """Handle Twitter login process with direct element targeting"""
+        """Handle Twitter login process"""
         try:
             logger.info("Attempting to login to Twitter...")
-            self.driver.get("https://twitter.com/login")
+            self.driver.get("https://twitter.com/i/flow/login")
             time.sleep(3)
 
-            # Enter username
-            username = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@name='text']"))
+            logger.info("Waiting for username input...")
+            username_input = self.wait_and_find_element(
+                By.XPATH,
+                "//input[@autocomplete='username']"
             )
-            username.send_keys(Config.TWITTER_USERNAME)
-            
-            # Click Next
-            next_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Next')]"))
-            )
-            next_button.click()
-            time.sleep(3)
+            if not username_input:
+                raise Exception("Could not find username input")
 
-            # Enter password
-            password = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@name='password']"))
-            )
-            password.send_keys(Config.TWITTER_PASSWORD)
+            username_input.send_keys(Config.TWITTER_USERNAME)
+            username_input.send_keys(Keys.RETURN)
+            logger.info("Username entered successfully")
+            time.sleep(2)
 
-            # Click Login
-            login_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Log in')]"))
+            logger.info("Waiting for password input...")
+            password_input = self.wait_and_find_element(
+                By.XPATH,
+                "//input[@name='password']"
             )
-            login_button.click()
+            if not password_input:
+                raise Exception("Could not find password input")
 
-            # Verify login success
-            try:
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, "//div[@data-testid='primaryColumn']"))
-                )
-                logger.info("Login successful")
-                return True
-            except:
-                logger.error("Login verification failed")
-                return False
+            password_input.send_keys(Config.TWITTER_PASSWORD)
+            password_input.send_keys(Keys.RETURN)
+            logger.info("Password entered successfully")
+
+            time.sleep(8)
+            logger.info("Login successful")
+            return True
 
         except Exception as e:
             logger.error(f"Login failed: {str(e)}")
             return False
 
+    
+ 
     def get_trending_topics(self) -> List[str]:
         """Scrape trending topics from Twitter"""
         try:
-            logger.info("Navigating to explore page...")
-            self.driver.get("https://twitter.com/explore")
+            logger.info("Waiting for trends to load...")
             time.sleep(5)
 
-            trends = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//div[@data-testid='trend']"))
-            )[:5]
+            logger.info("Looking for trends element...")
+            trends_section = self.wait_and_find_element(
+                By.XPATH,
+                "//div[@data-testid='trend']"
+            )
 
-            trend_names = [trend.text.strip() for trend in trends if trend.text.strip()]
-            
+            if not trends_section:
+                logger.info("Trying alternative trend locator...")
+                trends = self.driver.find_elements(
+                    By.XPATH,
+                    "//div[contains(@class, 'trend-item')]//span"
+                )[:5]
+            else:
+                trends = self.driver.find_elements(
+                    By.XPATH,
+                    "//div[@data-testid='trend']//span"
+                )[:5]
+
+            trend_names = [trend.text for trend in trends if trend.text]
+            logger.info(f"Found {len(trend_names)} trends")
+
             if len(trend_names) < 5:
                 raise Exception(f"Only found {len(trend_names)} trends, need 5")
 
-            logger.info(f"Successfully found {len(trend_names)} trends")
             return trend_names
 
         except Exception as e:
             logger.error(f"Error getting trends: {str(e)}")
             raise
-    # def login_to_twitter(self) -> bool:
-    #     """Handle Twitter login process"""
-    #     try:
-    #         logger.info("Attempting to login to Twitter...")
-    #         self.driver.get("https://twitter.com/i/flow/login")
-    #         time.sleep(3)
-
-    #         logger.info("Waiting for username input...")
-    #         username_input = self.wait_and_find_element(
-    #             By.XPATH,
-    #             "//input[@autocomplete='username']"
-    #         )
-    #         if not username_input:
-    #             raise Exception("Could not find username input")
-
-    #         username_input.send_keys(Config.TWITTER_USERNAME)
-    #         username_input.send_keys(Keys.RETURN)
-    #         logger.info("Username entered successfully")
-    #         time.sleep(2)
-
-    #         logger.info("Waiting for password input...")
-    #         password_input = self.wait_and_find_element(
-    #             By.XPATH,
-    #             "//input[@name='password']"
-    #         )
-    #         if not password_input:
-    #             raise Exception("Could not find password input")
-
-    #         password_input.send_keys(Config.TWITTER_PASSWORD)
-    #         password_input.send_keys(Keys.RETURN)
-    #         logger.info("Password entered successfully")
-
-    #         time.sleep(8)
-    #         logger.info("Login successful")
-    #         return True
-
-    #     except Exception as e:
-    #         logger.error(f"Login failed: {str(e)}")
-    #         return False
-
-    
- 
-    # def get_trending_topics(self) -> List[str]:
-    #     """Scrape trending topics from Twitter"""
-    #     try:
-    #         logger.info("Waiting for trends to load...")
-    #         time.sleep(5)
-
-    #         logger.info("Looking for trends element...")
-    #         trends_section = self.wait_and_find_element(
-    #             By.XPATH,
-    #             "//div[@data-testid='trend']"
-    #         )
-
-    #         if not trends_section:
-    #             logger.info("Trying alternative trend locator...")
-    #             trends = self.driver.find_elements(
-    #                 By.XPATH,
-    #                 "//div[contains(@class, 'trend-item')]//span"
-    #             )[:5]
-    #         else:
-    #             trends = self.driver.find_elements(
-    #                 By.XPATH,
-    #                 "//div[@data-testid='trend']//span"
-    #             )[:5]
-
-    #         trend_names = [trend.text for trend in trends if trend.text]
-    #         logger.info(f"Found {len(trend_names)} trends")
-
-    #         if len(trend_names) < 5:
-    #             raise Exception(f"Only found {len(trend_names)} trends, need 5")
-
-    #         return trend_names
-
-    #     except Exception as e:
-    #         logger.error(f"Error getting trends: {str(e)}")
-    #         raise
 
 
             
