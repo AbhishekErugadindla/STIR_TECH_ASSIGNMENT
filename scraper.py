@@ -118,7 +118,7 @@ class TwitterScraper:
             username_input = None
             for selector in username_selectors:
                 try:
-                    username_input = WebDriverWait(self.driver, 5).until(
+                    username_input = WebDriverWait(self.driver, 15).until(
                         EC.presence_of_element_located((By.XPATH, selector))
                     )
                     if username_input:
@@ -138,7 +138,7 @@ class TwitterScraper:
             time.sleep(1)
             
             # Find and click the "Next" button
-            next_button = WebDriverWait(self.driver, 5).until(
+            next_button = WebDriverWait(self.driver, 15).until(
                 EC.element_to_be_clickable((By.XPATH, "//div[@role='button']//span[text()='Next']"))
             )
             next_button.click()
