@@ -138,152 +138,98 @@ class TwitterScraper:
     #         logger.error(f"Login failed: {str(e)}")
     #         return False
 
-    # def get_trending_topics(self) -> List[str]:
-    #     """Scrape trending topics from Twitter"""
-    #     try:
-    #         logger.info("Waiting for trends to load...")
-    #         time.sleep(5)
-
-    #         logger.info("Looking for trends element...")
-    #         trends_section = self.wait_and_find_element(
-    #             By.XPATH,
-    #             "//div[@data-testid='trend']"
-    #         )
-
-    #         if not trends_section:
-    #             logger.info("Trying alternative trend locator...")
-    #             trends = self.driver.find_elements(
-    #                 By.XPATH,
-    #                 "//div[contains(@class, 'trend-item')]//span"
-    #             )[:5]
-    #         else:
-    #             trends = self.driver.find_elements(
-    #                 By.XPATH,
-    #                 "//div[@data-testid='trend']//span"
-    #             )[:5]
-
-    #         trend_names = [trend.text for trend in trends if trend.text]
-    #         logger.info(f"Found {len(trend_names)} trends")
-
-    #         if len(trend_names) < 5:
-    #             raise Exception(f"Only found {len(trend_names)} trends, need 5")
-
-    #         return trend_names
-
-    #     except Exception as e:
-    #         logger.error(f"Error getting trends: {str(e)}")
-    #         raise
+    
     def login_to_twitter(self) -> bool:
-        """Handle Twitter login process with improved automation detection avoidance"""
+        """Handle Twitter login process with improved selectors and waits"""
         try:
             logger.info("Attempting to login to Twitter...")
             self.driver.get("https://twitter.com/i/flow/login")
-            self.random_sleep(3, 5)
+            time.sleep(5)  # Initial wait for page load
 
-            # Clear cookies and local storage
-            self.driver.delete_all_cookies()
-            self.driver.execute_script("window.localStorage.clear();")
-            
-            # Add random mouse movements
-            action = ActionChains(self.driver)
-            action.move_by_offset(random.randint(10, 30), random.randint(10, 30)).perform()
+            # Updated selectors for username
+            username_selectors = [
+                "//input[@autocomplete='username']",
+                "//input[@name='text']",
+                "//input[@autocomplete='email']"
+            ]
 
-            logger.info("Waiting for username input...")
-            username_input = self.wait_and_find_element(
-                By.CSS_SELECTOR,
-                "input[autocomplete='username']"
-            )
+            username_input = None
+            for selector in username_selectors:
+                username_input = self.wait_and_find_element(By.XPATH, selector)
+                if username_input:
+                    break
+
             if not username_input:
-                logger.info("Trying alternative username selector...")
-                username_input = self.wait_and_find_element(
-                    By.CSS_SELECTOR,
-                    "input[name='text']"
-                )
-            if not username_input:
-                raise Exception("Could not find username input")
+                raise Exception("Could not find username input field")
 
-            # Type username like a human
-            self.human_type(username_input, Config.TWITTER_USERNAME)
-            self.random_sleep()
+            # Clear and enter username
+            username_input.clear()
+            username_input.send_keys(Config.TWITTER_USERNAME)
             username_input.send_keys(Keys.RETURN)
             logger.info("Username entered successfully")
-            self.random_sleep(2, 4)
+            time.sleep(3)
 
-            logger.info("Waiting for password input...")
-            password_input = self.wait_and_find_element(
-                By.CSS_SELECTOR,
-                "input[name='password']"
-            )
+            # Updated selectors for password
+            password_selectors = [
+                "//input[@name='password']",
+                "//input[@type='password']"
+            ]
+
+            password_input = None
+            for selector in password_selectors:
+                password_input = self.wait_and_find_element(By.XPATH, selector)
+                if password_input:
+                    break
+
             if not password_input:
-                raise Exception("Could not find password input")
+                raise Exception("Could not find password input field")
 
-            # Type password like a human
-            self.human_type(password_input, Config.TWITTER_PASSWORD)
-            self.random_sleep()
+            # Clear and enter password
+            password_input.clear()
+            password_input.send_keys(Config.TWITTER_PASSWORD)
             password_input.send_keys(Keys.RETURN)
             logger.info("Password entered successfully")
 
-            # Wait longer for login to complete
-            self.random_sleep(8, 12)
+            # Wait for login to complete
+            time.sleep(10)
             
             # Verify login success
-            try:
-                home_element = self.wait_and_find_element(
-                    By.CSS_SELECTOR,
-                    "[data-testid='AppTabBar_Home_Link']"
-                )
-                if home_element:
-                    logger.info("Login verified successful")
-                    return True
-            except Exception:
-                logger.error("Could not verify login success")
-                return False
+            if "login" in self.driver.current_url.lower():
+                raise Exception("Still on login page after attempt")
 
+            logger.info("Login successful")
             return True
 
         except Exception as e:
             logger.error(f"Login failed: {str(e)}")
+            self.save_screenshot("login_failure")
             return False
 
     def get_trending_topics(self) -> List[str]:
-        """Scrape trending topics from Twitter with improved selectors"""
+        """Scrape trending topics from Twitter"""
         try:
             logger.info("Waiting for trends to load...")
-            self.random_sleep(5, 7)
-
-            # Try to navigate to explore page first
-            self.driver.get("https://twitter.com/explore/tabs/trending")
-            self.random_sleep(3, 5)
+            time.sleep(5)
 
             logger.info("Looking for trends element...")
-            trends = []
-            
-            # Try multiple selectors for trends
-            selectors = [
-                "div[data-testid='trend']",
-                "div[class*='trend-item']",
-                "div[class*='trending']"
-            ]
-            
-            for selector in selectors:
-                if not trends:
-                    trends = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    if trends:
-                        logger.info(f"Found trends using selector: {selector}")
-                        break
+            trends_section = self.wait_and_find_element(
+                By.XPATH,
+                "//div[@data-testid='trend']"
+            )
 
-            if not trends:
-                raise Exception("Could not find any trends")
+            if not trends_section:
+                logger.info("Trying alternative trend locator...")
+                trends = self.driver.find_elements(
+                    By.XPATH,
+                    "//div[contains(@class, 'trend-item')]//span"
+                )[:5]
+            else:
+                trends = self.driver.find_elements(
+                    By.XPATH,
+                    "//div[@data-testid='trend']//span"
+                )[:5]
 
-            trend_names = []
-            for trend in trends[:5]:
-                try:
-                    name = trend.find_element(By.CSS_SELECTOR, "span").text
-                    if name:
-                        trend_names.append(name)
-                except Exception:
-                    continue
-
+            trend_names = [trend.text for trend in trends if trend.text]
             logger.info(f"Found {len(trend_names)} trends")
 
             if len(trend_names) < 5:
@@ -294,6 +240,8 @@ class TwitterScraper:
         except Exception as e:
             logger.error(f"Error getting trends: {str(e)}")
             raise
+
+
             
     def save_to_mongodb(self, trends: List[str]) -> Dict[str, str]:
         """Save trending topics to MongoDB"""
