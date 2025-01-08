@@ -3,7 +3,15 @@ services:
     name: twitter-trends-scraper
     env: python
     buildCommand: |
-      apt-get update && apt-get install -y chromium chromium-driver
+      wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+      echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+      apt-get update
+      apt-get install -y google-chrome-stable
+      CHROME_VERSION=$(google-chrome --version | awk '{ print $3 }' | awk -F'.' '{ print $1 }')
+      wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROME_VERSION.0.6261.94/linux64/chromedriver-linux64.zip"
+      unzip chromedriver-linux64.zip
+      mv chromedriver-linux64/chromedriver /usr/local/bin/
+      chmod +x /usr/local/bin/chromedriver
       pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
@@ -19,6 +27,4 @@ services:
         sync: false
       - key: PROXY_MESH_URL
         sync: false
-      - key: CHROME_BINARY_LOCATION
-        value: /usr/bin/chromium
     autoDeploy: true
