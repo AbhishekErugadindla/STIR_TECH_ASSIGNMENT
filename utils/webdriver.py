@@ -47,11 +47,22 @@ def setup_driver():
     chrome_options.add_argument('--disable-blink-features=AutomationControlled')
     chrome_options.add_argument('--disable-blink-features')
     chrome_options.add_argument('--disable-infobars')
-    chrome_options.add_argument('--lang=en-US,en')
     chrome_options.add_argument('--disable-extensions')
     chrome_options.add_argument('--start-maximized')
     chrome_options.add_argument('--disable-web-security')
     chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+    
+    chrome_options.add_argument('--disable-software-rasterizer')
+    chrome_options.add_argument('--single-process')  # Important for memory usage
+    chrome_options.add_argument('--disable-setuid-sandbox')
+    chrome_options.add_argument('--remote-debugging-port=9222')
+    chrome_options.add_argument('--disable-dev-tools')
+    chrome_options.add_argument('--no-zygote')
+    chrome_options.add_argument('--disable-accelerated-2d-canvas')
+    chrome_options.add_argument('--disable-gl-drawing-for-tests')
+    chrome_options.add_argument('--disable-web-security')
+    chrome_options.add_argument('--memory-pressure-off')
+    chrome_options.add_argument('--js-flags="--max-old-space-size=256"')
     
     # Additional stealth settings
     chrome_options.add_argument('--disable-automation')
@@ -83,10 +94,6 @@ def setup_driver():
         # Execute CDP commands for additional stealth
         driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": selected_agent})
         
-        # Additional stealth scripts
-        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        driver.execute_script("Object.defineProperty(navigator, 'plugins', {get: function() {return[1, 2, 3, 4, 5]}})")
-        driver.execute_script("Object.defineProperty(navigator, 'languages', {get: function() {return ['en-US', 'en']}})")
         
         logger.info("WebDriver setup successful with enhanced stealth settings")
         return driver
