@@ -520,7 +520,7 @@ class TwitterScraper:
             logger.info("Waiting for username input...")
             username_input = self.wait_and_find_element(
                 By.XPATH,
-               "//input[@type='text'][@autocomplete='username']"
+                "//input[@autocomplete='username'][@name='text']"
 
                
             )
@@ -552,101 +552,101 @@ class TwitterScraper:
             logger.error(f"Login failed: {str(e)}")
             return False
                     
-    def get_trending_topics(self) -> List[str]:
-        """Scrape trending topics from Twitter"""
-        try:
-            logger.info("Waiting for trends to load...")
-            time.sleep(5)
+    # def get_trending_topics(self) -> List[str]:
+    #     """Scrape trending topics from Twitter"""
+    #     try:
+    #         logger.info("Waiting for trends to load...")
+    #         time.sleep(5)
 
-            logger.info("Looking for trends element...")
-            trends_section = self.wait_and_find_element(
-                By.XPATH,
-                "//div[@data-testid='trend']"
-            )
+    #         logger.info("Looking for trends element...")
+    #         trends_section = self.wait_and_find_element(
+    #             By.XPATH,
+    #             "//div[@data-testid='trend']"
+    #         )
 
-            if not trends_section:
-                logger.info("Trying alternative trend locator...")
-                trends = self.driver.find_elements(
-                    By.XPATH,
-                    "//div[contains(@class, 'trend-item')]//span"
-                )[:5]
-            else:
-                trends = self.driver.find_elements(
-                    By.XPATH,
-                    "//div[@data-testid='trend']//span"
-                )[:5]
+    #         if not trends_section:
+    #             logger.info("Trying alternative trend locator...")
+    #             trends = self.driver.find_elements(
+    #                 By.XPATH,
+    #                 "//div[contains(@class, 'trend-item')]//span"
+    #             )[:5]
+    #         else:
+    #             trends = self.driver.find_elements(
+    #                 By.XPATH,
+    #                 "//div[@data-testid='trend']//span"
+    #             )[:5]
 
-            trend_names = [trend.text for trend in trends if trend.text]
-            logger.info(f"Found {len(trend_names)} trends")
+    #         trend_names = [trend.text for trend in trends if trend.text]
+    #         logger.info(f"Found {len(trend_names)} trends")
 
-            if len(trend_names) < 5:
-                raise Exception(f"Only found {len(trend_names)} trends, need 5")
+    #         if len(trend_names) < 5:
+    #             raise Exception(f"Only found {len(trend_names)} trends, need 5")
 
-            return trend_names
+    #         return trend_names
 
-        except Exception as e:
-            logger.error(f"Error getting trends: {str(e)}")
-            raise
+    #     except Exception as e:
+    #         logger.error(f"Error getting trends: {str(e)}")
+    #         raise
 
  
     
 
 
-    # def get_trending_topics(self) -> List[str]:
-    #     """Scrape trending topics from Twitter with multiple fallback selectors"""
-    #     try: 
-    #         logger.info("Navigating to explore page...")
-    #         self.driver.get("https://x.com/explore")
-    #         time.sleep(8)  # Allow page to load completely
+    def get_trending_topics(self) -> List[str]:
+        """Scrape trending topics from Twitter with multiple fallback selectors"""
+        try: 
+            logger.info("Navigating to explore page...")
+            self.driver.get("https://x.com/explore")
+            time.sleep(8)  # Allow page to load completely
         
-    #         logger.info("Looking for trends...")
+            logger.info("Looking for trends...")
         
-    #         # Try multiple selector patterns
-    #         selectors = [
-    #         "//div[@data-testid='trend']//span[contains(@class, 'r-1qd0xha')]",
-    #         "//div[contains(@class, 'trend-item')]//span[contains(@class, 'r-1qd0xha')]",
-    #         "//div[@data-testid='trend']//span",
-    #         "//div[contains(@class, 'css-1dbjc4n')]//span[contains(@class, 'r-1qd0xha')]"
-    #         ]
+            # Try multiple selector patterns
+            selectors = [
+            "//div[@data-testid='trend']//span[contains(@class, 'r-1qd0xha')]",
+            "//div[contains(@class, 'trend-item')]//span[contains(@class, 'r-1qd0xha')]",
+            "//div[@data-testid='trend']//span",
+            "//div[contains(@class, 'css-1dbjc4n')]//span[contains(@class, 'r-1qd0xha')]"
+            ]
         
-    #         trends = []
-    #         for selector in selectors:
-    #             try:
-    #                 elements = self.driver.find_elements(By.XPATH, selector)
-    #                 trends = [trend.text for trend in elements if trend.text and not trend.text.startswith('#')]
-    #                 if len(trends) >= 5:
-    #                     trends = trends[:5]
-    #                     break
-    #             except Exception as selector_error:
-    #                 logger.debug(f"Selector {selector} failed: {str(selector_error)}")
-    #                 continue
+            trends = []
+            for selector in selectors:
+                try:
+                    elements = self.driver.find_elements(By.XPATH, selector)
+                    trends = [trend.text for trend in elements if trend.text and not trend.text.startswith('#')]
+                    if len(trends) >= 5:
+                        trends = trends[:5]
+                        break
+                except Exception as selector_error:
+                    logger.debug(f"Selector {selector} failed: {str(selector_error)}")
+                    continue
         
-    #         logger.info(f"Found {len(trends)} trends")
-    #         if len(trends) < 5:
-    #             # Try scrolling if we haven't found enough trends
-    #             self.driver.execute_script("window.scrollBy(0, 500)")
-    #             time.sleep(3)
+            logger.info(f"Found {len(trends)} trends")
+            if len(trends) < 5:
+                # Try scrolling if we haven't found enough trends
+                self.driver.execute_script("window.scrollBy(0, 500)")
+                time.sleep(3)
             
-    #             # Try one more time after scrolling
-    #             for selector in selectors:
-    #                 try:
-    #                     elements = self.driver.find_elements(By.XPATH, selector)
-    #                     new_trends = [trend.text for trend in elements if trend.text and not trend.text.startswith('#')]
-    #                     trends.extend(new_trends)
-    #                     if len(trends) >= 5:
-    #                         trends = list(dict.fromkeys(trends))[:5]  # Remove duplicates
-    #                         break
-    #                 except Exception:
-    #                     continue
+                # Try one more time after scrolling
+                for selector in selectors:
+                    try:
+                        elements = self.driver.find_elements(By.XPATH, selector)
+                        new_trends = [trend.text for trend in elements if trend.text and not trend.text.startswith('#')]
+                        trends.extend(new_trends)
+                        if len(trends) >= 5:
+                            trends = list(dict.fromkeys(trends))[:5]  # Remove duplicates
+                            break
+                    except Exception:
+                        continue
         
-    #         if len(trends) < 5:
-    #             raise Exception(f"Only found {len(trends)} trends, need 5")
+            if len(trends) < 5:
+                raise Exception(f"Only found {len(trends)} trends, need 5")
             
-    #         return trends
+            return trends
         
-    #     except Exception as e:
-    #         logger.error(f"Error getting trends: {str(e)}")
-    #         raise
+        except Exception as e:
+            logger.error(f"Error getting trends: {str(e)}")
+            raise
 
             
     def save_to_mongodb(self, trends: List[str]) -> Dict[str, str]:
