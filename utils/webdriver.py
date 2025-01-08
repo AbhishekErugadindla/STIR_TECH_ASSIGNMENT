@@ -45,7 +45,4 @@ def setup_driver():
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
-        return driver
-    except Exception as e:
-        print(f"Error creating WebDriver: {str(e)}")
-        raise
+        
