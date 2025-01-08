@@ -60,6 +60,9 @@ def setup_driver():
     
     chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
     chrome_options.add_experimental_option('useAutomationExtension', False)
+    chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+    chrome_options.add_argument('--disable-javascript')
+    chrome_options.add_argument('--incognito')
     chrome_options.binary_location = "/usr/bin/google-chrome"
 
     # Create and return the driver
