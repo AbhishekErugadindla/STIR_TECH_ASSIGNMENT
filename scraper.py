@@ -336,7 +336,7 @@ class TwitterScraper:
         """Handle Twitter login process"""
         try:
             logger.info("Attempting to login to Twitter...")
-            self.driver.get("https://twitter.com/i/flow/login")
+            self.driver.get("https://twitter.com/login")
             time.sleep(3)
 
             logger.info("Waiting for username input...")
