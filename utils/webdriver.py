@@ -26,6 +26,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import os
 import logging
 
@@ -43,15 +44,11 @@ def setup_driver():
         chrome_options.add_argument('--disable-notifications')
         chrome_options.add_argument('--window-size=1920,1080')
         chrome_options.add_argument('--remote-debugging-port=9222')
+        chrome_options.add_argument('--disable-software-rasterizer')
+        chrome_options.add_argument('--disable-extensions')
         
-        # Set binary location for Chromium
-        chrome_binary_location = os.getenv('CHROME_BINARY_LOCATION', '/usr/bin/chromium')
-        chrome_options.binary_location = chrome_binary_location
-        
-        # Set up Chrome service with explicit driver path
-        service = Service(executable_path='/usr/bin/chromedriver')
-        
-        # Create and return the driver
+        # Create the driver with default ChromeDriver path
+        service = Service('/usr/local/bin/chromedriver')
         driver = webdriver.Chrome(
             service=service,
             options=chrome_options
