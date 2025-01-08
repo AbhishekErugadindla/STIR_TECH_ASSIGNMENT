@@ -257,7 +257,7 @@ class TwitterScraper:
         """Enhanced Twitter login process with better error handling"""
         try:
             logger.info("Attempting to login to Twitter...")
-            self.driver.get("https://twitter.com/login")
+            self.driver.get("https://x.com/i/flow/login") 
             time.sleep(5)  # Allow page to fully load
 
             # Clear cookies and local storage
