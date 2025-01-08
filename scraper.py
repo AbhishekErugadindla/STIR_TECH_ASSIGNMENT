@@ -173,7 +173,7 @@ class TwitterScraper:
     #     except Exception as e:
     #         logger.error(f"Error getting trends: {str(e)}")
     #         raise
-def login_to_twitter(self) -> bool:
+    def login_to_twitter(self) -> bool:
         """Handle Twitter login process with improved automation detection avoidance"""
         try:
             logger.info("Attempting to login to Twitter...")
