@@ -97,142 +97,142 @@ class TwitterScraper:
         except Exception as e:
             logger.error(f"Error finding element {value}: {str(e)}")
             return None
-def login_to_twitter(self) -> bool:
-    """Handle Twitter login process with enhanced error handling"""
-    try:
-        logger.info("Attempting to login to Twitter...")
-        self.driver.get("https://twitter.com/i/flow/login")
-        time.sleep(5)  # Increased initial wait time
-
-        # Multiple selector attempts for username input
-        selectors = [
-            "//input[@autocomplete='username']",
-            "//input[@name='text']",
-            "//input[@autocomplete='email']",
-            "//input[@type='text']"
-        ]
-
-        username_input = None
-        for selector in selectors:
-            try:
-                username_input = WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.XPATH, selector))
-                )
-                if username_input:
-                    break
-            except:
-                continue
-
-        if not username_input:
-            logger.error("Could not find username input field")
-            return False
-
-        # Simulate human typing
-        for char in Config.TWITTER_USERNAME:
-            username_input.send_keys(char)
-            time.sleep(random.uniform(0.1, 0.3))
-        
-        time.sleep(1)
-        username_input.send_keys(Keys.RETURN)
-        logger.info("Username entered successfully")
-        time.sleep(3)
-
-        # Multiple selector attempts for password input
-        password_selectors = [
-            "//input[@name='password']",
-            "//input[@type='password']",
-            "//input[@autocomplete='current-password']"
-        ]
-
-        password_input = None
-        for selector in password_selectors:
-            try:
-                password_input = WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.XPATH, selector))
-                )
-                if password_input:
-                    break
-            except:
-                continue
-
-        if not password_input:
-            logger.error("Could not find password input field")
-            return False
-
-        # Simulate human typing for password
-        for char in Config.TWITTER_PASSWORD:
-            password_input.send_keys(char)
-            time.sleep(random.uniform(0.1, 0.3))
-
-        time.sleep(1)
-        password_input.send_keys(Keys.RETURN)
-        logger.info("Password entered successfully")
-
-        # Wait longer for login to complete
-        time.sleep(10)
-        
-        # Verify login success
+    def login_to_twitter(self) -> bool:
+        """Handle Twitter login process with enhanced error handling"""
         try:
-            home_timeline = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//div[@data-testid='primaryColumn']"))
-            )
-            logger.info("Login successful - Timeline found")
-            return True
-        except:
-            logger.error("Login verification failed - Timeline not found")
+            logger.info("Attempting to login to Twitter...")
+            self.driver.get("https://twitter.com/i/flow/login")
+            time.sleep(5)  # Increased initial wait time
+    
+            # Multiple selector attempts for username input
+            selectors = [
+                "//input[@autocomplete='username']",
+                "//input[@name='text']",
+                "//input[@autocomplete='email']",
+                "//input[@type='text']"
+            ]
+    
+            username_input = None
+            for selector in selectors:
+                try:
+                    username_input = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located((By.XPATH, selector))
+                    )
+                    if username_input:
+                        break
+                except:
+                    continue
+    
+            if not username_input:
+                logger.error("Could not find username input field")
+                return False
+    
+            # Simulate human typing
+            for char in Config.TWITTER_USERNAME:
+                username_input.send_keys(char)
+                time.sleep(random.uniform(0.1, 0.3))
+            
+            time.sleep(1)
+            username_input.send_keys(Keys.RETURN)
+            logger.info("Username entered successfully")
+            time.sleep(3)
+    
+            # Multiple selector attempts for password input
+            password_selectors = [
+                "//input[@name='password']",
+                "//input[@type='password']",
+                "//input[@autocomplete='current-password']"
+            ]
+    
+            password_input = None
+            for selector in password_selectors:
+                try:
+                    password_input = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located((By.XPATH, selector))
+                    )
+                    if password_input:
+                        break
+                except:
+                    continue
+    
+            if not password_input:
+                logger.error("Could not find password input field")
+                return False
+    
+            # Simulate human typing for password
+            for char in Config.TWITTER_PASSWORD:
+                password_input.send_keys(char)
+                time.sleep(random.uniform(0.1, 0.3))
+    
+            time.sleep(1)
+            password_input.send_keys(Keys.RETURN)
+            logger.info("Password entered successfully")
+    
+            # Wait longer for login to complete
+            time.sleep(10)
+            
+            # Verify login success
+            try:
+                home_timeline = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, "//div[@data-testid='primaryColumn']"))
+                )
+                logger.info("Login successful - Timeline found")
+                return True
+            except:
+                logger.error("Login verification failed - Timeline not found")
+                return False
+    
+        except Exception as e:
+            logger.error(f"Login failed: {str(e)}")
             return False
 
-    except Exception as e:
-        logger.error(f"Login failed: {str(e)}")
-        return False
-
-def get_trending_topics(self) -> List[str]:
-    """Scrape trending topics from Twitter with enhanced error handling"""
-    try:
-        logger.info("Navigating to explore page...")
-        self.driver.get("https://twitter.com/explore")
-        time.sleep(8)  # Allow page to load completely
-
-        # Multiple attempts to find trends with different selectors
-        trend_selectors = [
-            "//div[@data-testid='trend']",
-            "//div[contains(@class, 'trend-item')]",
-            "//div[contains(@class, 'css-1dbjc4n')]//span[contains(@class, 'css-901oao')]"
-        ]
-
-        trends = []
-        for selector in trend_selectors:
-            try:
-                elements = WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_all_elements_located((By.XPATH, selector))
-                )
-                if elements:
-                    trends = elements[:5]
-                    break
-            except:
-                continue
-
-        if not trends:
-            raise Exception("Could not find any trending topics")
-
-        trend_names = []
-        for trend in trends:
-            try:
-                text = trend.text.strip()
-                if text and len(trend_names) < 5:
-                    trend_names.append(text)
-            except:
-                continue
-
-        if len(trend_names) < 5:
-            raise Exception(f"Only found {len(trend_names)} trends, need 5")
-
-        logger.info(f"Successfully found {len(trend_names)} trends")
-        return trend_names
-
-    except Exception as e:
-        logger.error(f"Error getting trends: {str(e)}")
-        raise
+    def get_trending_topics(self) -> List[str]:
+        """Scrape trending topics from Twitter with enhanced error handling"""
+        try:
+            logger.info("Navigating to explore page...")
+            self.driver.get("https://twitter.com/explore")
+            time.sleep(8)  # Allow page to load completely
+    
+            # Multiple attempts to find trends with different selectors
+            trend_selectors = [
+                "//div[@data-testid='trend']",
+                "//div[contains(@class, 'trend-item')]",
+                "//div[contains(@class, 'css-1dbjc4n')]//span[contains(@class, 'css-901oao')]"
+            ]
+    
+            trends = []
+            for selector in trend_selectors:
+                try:
+                    elements = WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_all_elements_located((By.XPATH, selector))
+                    )
+                    if elements:
+                        trends = elements[:5]
+                        break
+                except:
+                    continue
+    
+            if not trends:
+                raise Exception("Could not find any trending topics")
+    
+            trend_names = []
+            for trend in trends:
+                try:
+                    text = trend.text.strip()
+                    if text and len(trend_names) < 5:
+                        trend_names.append(text)
+                except:
+                    continue
+    
+            if len(trend_names) < 5:
+                raise Exception(f"Only found {len(trend_names)} trends, need 5")
+    
+            logger.info(f"Successfully found {len(trend_names)} trends")
+            return trend_names
+    
+        except Exception as e:
+            logger.error(f"Error getting trends: {str(e)}")
+            raise
     # def login_to_twitter(self) -> bool:
     #     """Handle Twitter login process"""
     #     try:
