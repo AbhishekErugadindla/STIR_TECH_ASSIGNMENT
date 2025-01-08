@@ -98,113 +98,48 @@ class TwitterScraper:
             logger.error(f"Error finding element {value}: {str(e)}")
             return None
 
-    # def login_to_twitter(self) -> bool:
-    #     """Handle Twitter login process"""
-    #     try:
-    #         logger.info("Attempting to login to Twitter...")
-    #         self.driver.get("https://twitter.com/i/flow/login")
-    #         time.sleep(3)
-
-    #         logger.info("Waiting for username input...")
-    #         username_input = self.wait_and_find_element(
-    #             By.XPATH,
-    #             "//input[@autocomplete='username']"
-    #         )
-    #         if not username_input:
-    #             raise Exception("Could not find username input")
-
-    #         username_input.send_keys(Config.TWITTER_USERNAME)
-    #         username_input.send_keys(Keys.RETURN)
-    #         logger.info("Username entered successfully")
-    #         time.sleep(2)
-
-    #         logger.info("Waiting for password input...")
-    #         password_input = self.wait_and_find_element(
-    #             By.XPATH,
-    #             "//input[@name='password']"
-    #         )
-    #         if not password_input:
-    #             raise Exception("Could not find password input")
-
-    #         password_input.send_keys(Config.TWITTER_PASSWORD)
-    #         password_input.send_keys(Keys.RETURN)
-    #         logger.info("Password entered successfully")
-
-    #         time.sleep(8)
-    #         logger.info("Login successful")
-    #         return True
-
-    #     except Exception as e:
-    #         logger.error(f"Login failed: {str(e)}")
-    #         return False
-
-    
     def login_to_twitter(self) -> bool:
-        """Handle Twitter login process with improved selectors and waits"""
+        """Handle Twitter login process"""
         try:
             logger.info("Attempting to login to Twitter...")
             self.driver.get("https://twitter.com/i/flow/login")
-            time.sleep(5)  # Initial wait for page load
+            time.sleep(3)
 
-            # Updated selectors for username
-            username_selectors = [
-                "//input[@autocomplete='username']",
-                "//input[@name='text']",
-                "//input[@autocomplete='email']"
-            ]
-
-            username_input = None
-            for selector in username_selectors:
-                username_input = self.wait_and_find_element(By.XPATH, selector)
-                if username_input:
-                    break
-
+            logger.info("Waiting for username input...")
+            username_input = self.wait_and_find_element(
+                By.XPATH,
+                "//input[@autocomplete='username']"
+            )
             if not username_input:
-                raise Exception("Could not find username input field")
+                raise Exception("Could not find username input")
 
-            # Clear and enter username
-            username_input.clear()
             username_input.send_keys(Config.TWITTER_USERNAME)
             username_input.send_keys(Keys.RETURN)
             logger.info("Username entered successfully")
-            time.sleep(3)
+            time.sleep(2)
 
-            # Updated selectors for password
-            password_selectors = [
-                "//input[@name='password']",
-                "//input[@type='password']"
-            ]
-
-            password_input = None
-            for selector in password_selectors:
-                password_input = self.wait_and_find_element(By.XPATH, selector)
-                if password_input:
-                    break
-
+            logger.info("Waiting for password input...")
+            password_input = self.wait_and_find_element(
+                By.XPATH,
+                "//input[@name='password']"
+            )
             if not password_input:
-                raise Exception("Could not find password input field")
+                raise Exception("Could not find password input")
 
-            # Clear and enter password
-            password_input.clear()
             password_input.send_keys(Config.TWITTER_PASSWORD)
             password_input.send_keys(Keys.RETURN)
             logger.info("Password entered successfully")
 
-            # Wait for login to complete
-            time.sleep(10)
-            
-            # Verify login success
-            if "login" in self.driver.current_url.lower():
-                raise Exception("Still on login page after attempt")
-
+            time.sleep(8)
             logger.info("Login successful")
             return True
 
         except Exception as e:
             logger.error(f"Login failed: {str(e)}")
-            self.save_screenshot("login_failure")
             return False
 
+    
+ 
     def get_trending_topics(self) -> List[str]:
         """Scrape trending topics from Twitter"""
         try:
