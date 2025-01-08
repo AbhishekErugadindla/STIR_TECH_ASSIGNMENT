@@ -520,7 +520,9 @@ class TwitterScraper:
             logger.info("Waiting for username input...")
             username_input = self.wait_and_find_element(
                 By.XPATH,
-                "//input[@autocomplete='username']"
+                "//input[@autocomplete='username'][@name='text']",
+
+               
             )
             if not username_input:
                 raise Exception("Could not find username input")
