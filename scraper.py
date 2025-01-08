@@ -383,11 +383,8 @@ import os
 from dotenv import load_dotenv
 from config import Config
 from utils.webdriver import setup_driver
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List
 import logging
-
-# Load environment variables
-load_dotenv()
 
 # Setup logging
 logging.basicConfig(
@@ -396,7 +393,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class TwitterScraper:
     def __init__(self):
         self.driver = None
@@ -404,17 +400,9 @@ class TwitterScraper:
         self.db = self.client["twitter_trends"]
         self.collection = self.db["trends"]
         self.current_ip = None
-        self.proxy_mesh_url = os.getenv('PROXY_MESH_URL')
-        if not self.proxy_mesh_url:
-            logger.warning("PROXY_MESH_URL not found in environment variables")
-        
-        # Define username input selectors
-        self.username_selectors = [
-            "//input[@autocomplete='username']",
-            "//input[@name='text']",
-            "//input[@autocomplete='email']",
-            "//input[@type='text']"
-        ]
+        # Hardcoded credentials
+        self.username = "AbhishekErugad"
+        self.password = "abhierugadindla"
 
     @staticmethod
     def get_mongodb_connection() -> pymongo.MongoClient:
@@ -424,7 +412,6 @@ class TwitterScraper:
         return pymongo.MongoClient(connection_string)
 
     def get_current_ip(self) -> str:
-        """Get current IP address using an IP checking service"""
         try:
             response = requests.get('https://api.ipify.org?format=json')
             if response.status_code == 200:
@@ -437,29 +424,9 @@ class TwitterScraper:
             logger.error(f"Error getting IP address: {str(e)}")
             return "unknown"
 
-    def setup_proxy(self) -> Dict[str, str]:
-        """Configure ProxyMesh proxy settings from environment variables"""
-        try:
-            if not self.proxy_mesh_url:
-                logger.error("PROXY_MESH_URL environment variable not set")
-                return {}
-
-            proxy_auth = urllib.parse.urlparse(self.proxy_mesh_url)
-            proxy = {
-                'http': f'http://{proxy_auth.username}:{proxy_auth.password}@{proxy_auth.hostname}:{proxy_auth.port}',
-                'https': f'https://{proxy_auth.username}:{proxy_auth.password}@{proxy_auth.hostname}:{proxy_auth.port}'
-            }
-            logger.info("Proxy configuration successful")
-            return proxy
-        except Exception as e:
-            logger.error(f"Error setting up proxy: {str(e)}")
-            return {}
-
     def setup_driver(self) -> None:
-        """Setup WebDriver with proxy configuration"""
         try:
-            logger.info("Setting up WebDriver with proxy...")
-            proxy = self.setup_proxy()
+            logger.info("Setting up WebDriver...")
             self.driver = setup_driver()
             logger.info("WebDriver setup successful")
         except Exception as e:
@@ -476,46 +443,38 @@ class TwitterScraper:
             logger.error(f"Error finding element {value}: {str(e)}")
             return None
 
-    def try_find_username_input(self) -> Optional[WebElement]:
-        """Try multiple selectors to find username input field"""
-        for selector in self.username_selectors:
-            logger.info(f"Trying username selector: {selector}")
-            element = self.wait_and_find_element(By.XPATH, selector)
-            if element:
-                logger.info(f"Found username input with selector: {selector}")
-                return element
-        return None
-
     def login_to_twitter(self) -> bool:
-        """Handle Twitter login process"""
         try:
             logger.info("Attempting to login to Twitter...")
             self.driver.get("https://twitter.com/i/flow/login")
-            time.sleep(3)
+            time.sleep(5)  # Increased initial wait time
 
-            logger.info("Trying multiple selectors for username input...")
-            username_input = self.try_find_username_input()
+            # Updated selector for username
+            logger.info("Entering username...")
+            username_input = self.wait_and_find_element(
+                By.CSS_SELECTOR,
+                "input[autocomplete='username']"
+            )
             if not username_input:
-                raise Exception("Could not find username input with any selector")
+                raise Exception("Could not find username input")
 
-            username_input.send_keys(Config.TWITTER_USERNAME)
+            username_input.send_keys(self.username)
             username_input.send_keys(Keys.RETURN)
-            logger.info("Username entered successfully")
-            time.sleep(2)
+            time.sleep(3)  # Wait after username entry
 
-            logger.info("Waiting for password input...")
+            # Updated selector for password
+            logger.info("Entering password...")
             password_input = self.wait_and_find_element(
-                By.XPATH,
-                "//input[@name='password']"
+                By.CSS_SELECTOR,
+                "input[type='password']"
             )
             if not password_input:
                 raise Exception("Could not find password input")
 
-            password_input.send_keys(Config.TWITTER_PASSWORD)
+            password_input.send_keys(self.password)
             password_input.send_keys(Keys.RETURN)
-            logger.info("Password entered successfully")
+            time.sleep(5)  # Increased wait time after login
 
-            time.sleep(8)
             logger.info("Login successful")
             return True
 
@@ -524,43 +483,36 @@ class TwitterScraper:
             return False
 
     def get_trending_topics(self) -> List[str]:
-        """Scrape trending topics from Twitter"""
         try:
             logger.info("Waiting for trends to load...")
             time.sleep(5)
 
-            logger.info("Looking for trends element...")
-            trends_section = self.wait_and_find_element(
-                By.XPATH,
-                "//div[@data-testid='trend']"
-            )
+            # Updated trending topics selector
+            trends = self.driver.find_elements(
+                By.CSS_SELECTOR,
+                "[data-testid='trend'] span"
+            )[:5]
 
-            if not trends_section:
-                logger.info("Trying alternative trend locator...")
+            if not trends:
+                logger.info("Trying alternative trend selector...")
                 trends = self.driver.find_elements(
-                    By.XPATH,
-                    "//div[contains(@class, 'trend-item')]//span"
-                )[:5]
-            else:
-                trends = self.driver.find_elements(
-                    By.XPATH,
-                    "//div[@data-testid='trend']//span"
+                    By.CSS_SELECTOR,
+                    "div[data-testid='cellInnerDiv'] span"
                 )[:5]
 
             trend_names = [trend.text for trend in trends if trend.text]
             logger.info(f"Found {len(trend_names)} trends")
 
-            if len(trend_names) < 5:
-                raise Exception(f"Only found {len(trend_names)} trends, need 5")
+            if not trend_names:
+                raise Exception("No trends found")
 
-            return trend_names
+            return trend_names[:5]  # Ensure we return exactly 5 trends
 
         except Exception as e:
             logger.error(f"Error getting trends: {str(e)}")
             raise
 
     def save_to_mongodb(self, trends: List[str]) -> Dict[str, str]:
-        """Save trending topics to MongoDB"""
         data = {
             "_id": str(uuid.uuid4()),
             "trend1": trends[0],
@@ -582,9 +534,7 @@ class TwitterScraper:
             raise
 
     def scrape(self) -> Optional[Dict[str, str]]:
-        """Main scraping method"""
         try:
-            # Get current IP before starting the scraping process
             self.get_current_ip()
             self.setup_driver()
 
@@ -607,8 +557,6 @@ class TwitterScraper:
                 logger.info("Closing WebDriver...")
                 self.driver.quit()
 
-
 def scrape_twitter() -> Optional[Dict[str, str]]:
-    """Main function to be called from Flask app"""
     scraper = TwitterScraper()
     return scraper.scrape()
